@@ -1,0 +1,76 @@
+---
+title: "Indiana Birth and Maternal Morbitity" 
+subtitle: "2010 to 2019"
+author: "Dr. Cary Woods"
+
+output: 
+  html_document:
+    theme: flatly
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(psych)
+library(plotly)
+library(correlationfunnel)
+library(tidyquant)
+library(ggplot2)
+
+knitr::opts_chunk$set(
+  echo      = FALSE,
+  message   = FALSE,
+  warning   = FALSE
+)
+ibid <- read.csv("https://www.indybiosystems.com/datasets/ibid_2020.csv", header = TRUE)
+```
+
+### Data Summary
+
+
+
+```{r}
+selectInput("county_type", label = "Select Mother's County Type:",
+            choices = unique(ibid$MOTHER_RESID_COUNTY_TYPE), selected = "Urban")
+
+selectInput("age_group", label = "Select Mother's Age Group:",
+            choices = unique(ibid$MOTHER_AGE_GRP), selected = "25-34 Years")
+
+renderPlot({
+  # Filter data based on both selected county type and age group
+  filtered_data <- ibid %>% 
+    filter(MOTHER_RESID_COUNTY_TYPE == input$county_type & MOTHER_AGE_GRP == input$age_group)
+  
+  # Generate the histogram
+  ggplot(filtered_data, aes(x=NUM_BIRTHS_BY_MOTHER)) +
+    geom_histogram(binwidth=1) +
+    ggtitle(paste("Distribution of NUM_BIRTHS_BY_MOTHER in", input$county_type, "Counties for", input$age_group, "Age Group"))
+})
+```
+
+```{r}
+ibid %>% 
+  group_by(MOTHER_RESID_COUNTY_TYPE) %>% 
+  summarise(mean_births = mean(NUM_BIRTHS_BY_MOTHER, na.rm = TRUE),
+            sd_births = sd(NUM_BIRTHS_BY_MOTHER, na.rm = TRUE))
+
+ggplot(ibid, aes(x = MOTHER_RESID_COUNTY_TYPE)) +
+  geom_bar() +
+  ggtitle("Distribution by Location") +
+  xlab("County Type") +
+  ylab("Count")
+
+ibid %>% 
+  group_by(MOTHER_AGE_GRP) %>% 
+  summarise(mean_births = mean(NUM_BIRTHS_BY_MOTHER, na.rm = TRUE),
+            sd_births = sd(NUM_BIRTHS_BY_MOTHER, na.rm = TRUE))
+
+ggplot(ibid, aes(x = MOTHER_AGE_GRP)) +
+  geom_bar() +
+  ggtitle("Distribution by Age Group") +
+  xlab("Age Group") +
+  ylab("Count")
+
+
+
+```
